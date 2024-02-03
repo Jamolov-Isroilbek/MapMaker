@@ -1,0 +1,356 @@
+:root {
+    --background-image: url("assets/tiles/background_image.png");
+}
+
+body {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), var(--background-image);
+    background-size: cover;
+    padding: 0 50px;
+    font-family: 'Arial', sans-serif;
+    margin: 20px 40px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Game Header Styles */
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px 10px;
+}
+
+.map-title {
+    font-size: 32px;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.scores-container {
+    display: flex;
+    flex-direction: column;
+    margin-left: 20px;
+}
+
+/* Seasons Container */
+.seasons-container {
+    display: flex;
+    gap: 10px;
+}
+
+.season {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    padding: 10px;
+    width: 100px;
+    height: 100px;
+    background-color: #e9ecef;
+    border: 4px solid #dee2e6; 
+    border-radius: 15px;
+    color: #f5faf4; 
+    font-size: 18px;
+}
+
+#spring { background-color: #7ebc74; border-color: #528c48;}
+#summer { background-color: #fae985; border-color: #dcc147;}
+#autumn { background-color: #e3bf99; border-color: #66411d;}
+#winter { background-color: #7bcfe9; border-color: #4d8ea2;}
+
+.total-score {
+    text-align: center;
+    color: #000;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.points {
+    font-weight: bold;
+}
+
+/* Main Game Area */
+.game-main {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Map Grid Styles */
+.map-section {
+    flex: 1;
+    padding: 10px;
+}
+
+.grid-map {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    grid-template-rows: repeat(11, 1fr);
+    justify-content: center;
+    align-content: center;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: -55px;
+    width: calc(11 * 45px + 10 * 5px + 20px);
+    height: calc(11 * 45px + 10 * 5px + 20px);
+}
+
+.grid-cell {
+    width: 45px;
+    height: 45px;
+    background: url('assets/tiles/base_tile.png') center/cover;
+}
+
+.grid-mountain {
+    background: url('assets/tiles/mountain_tile.png') center/cover;
+}
+
+/* Side Content and Interactions */
+.side-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: calc(11 * 45px + 10 * 5px + 20px);
+    margin-left: 20px;
+    margin-top: -30px;
+    padding: 10px;
+}
+
+.element-interaction-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+    align-items: center;
+    margin-top: -15px;
+}
+
+.current-element-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 60px;
+}
+
+.mission-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mission-grid img {
+    max-height: 100px;
+    display: block;
+    margin: 0 auto;
+}
+
+.mission {
+    position: relative;
+    display: inline-block;
+    margin: 10px;
+}
+
+.mission-score {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.highlighted-mission {
+    outline: 5px solid #ffd700; /* Use a bright yellow color for the outline */
+    border-radius: 17px;
+    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); /* Add a subtle shadow for the "blowish" effect */
+    transform: scale(1.05); /* Scale the element slightly without affecting layout */
+    transform-origin: center center; /* Set the transform origin to the center for uniform scaling */
+    transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Add a smooth transition for outline and box-shadow */
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background-color: #000;
+    margin: 10px 0;
+}
+
+.element-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    padding: 5px;
+    padding-bottom: 0px;
+}
+
+.current-element-interaction {
+    position: relative;
+    width: 160px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border-radius: 15px;
+    font-size: 20px;
+    margin-top: -55px;
+}
+
+h2 {
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+}
+
+.element-cell {
+    width: 45px;
+    height: 45px;
+}
+
+.element-cell.forest { background: url('assets/tiles/forest_tile.png') center/cover; }
+.element-cell.water { background: url('assets/tiles/water_tile.png') center/cover; }
+.element-cell.town { background: url('assets/tiles/town_tile.png') center/cover; }
+.element-cell.farm { background: url('assets/tiles/farm_tile.png') center/cover; }
+
+.element-cell.empty-cell {
+    background: #fff;
+}
+
+.action-button {
+    width: 100px;
+    height: 75px; 
+    border: 5px solid #84bb70;
+    background-color: #bfffa4;
+    border-radius: 10px;
+    margin-top: 10px;
+    font-size: 20px;
+}
+
+.time-unit-display {
+    position: absolute;
+    top: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: end;
+    background-color: #fff;
+}
+
+.clock-image {
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+}
+
+.mission-display, .current-seasons-display, .elapse-time-display {
+    flex-grow: 1;
+}
+
+/* For preview states */
+.preview-yes {
+    background: #abeb83;
+    border: 2px solid #5bbf38;
+    border-radius: 5px;
+    box-shadow: 0 0 5px #5bbf38;
+}
+
+.preview-no {
+    background-color: #e2bf96;
+    border: 2px solid #ea3323;
+    border-radius: 5px;
+    box-shadow: 0 0 5px #ea3323;
+}
+
+/* For an occupied cell */
+.element {
+    background-color: #fff;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+@media screen and (max-width: 1200px) {
+
+    body {
+        padding: 0;
+    }
+
+    .game-header {
+        width: calc(11 * 40px + 10 * 5px + 20px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-left: -2px;
+    }
+
+    .season {
+        width: 100px;
+        height: 50px;
+        font-size: 16px;
+    }
+
+    .grid-map {
+        width: calc(11 * 40px + 10 * 5px + 20px);
+        height: calc(11 * 40px + 10 * 5px + 20px);
+        margin-top: 0;
+    }
+
+    .grid-cell {
+        width: 40px;
+        height: 40px;
+        background: url('assets/tiles/base_tile.png') center/cover;
+    }
+
+    .game-main {
+        display: flex;
+        flex-direction: space-around;   
+    }
+
+    .side-content {
+        margin-top: -140px;
+        margin-left: 0;
+    }
+
+    .mission-grid {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        grid-gap: 5px;
+    }
+
+    .mission-grid img {
+        max-height: 90px;
+    }
+
+    .grid-mountain {
+        background: url('assets/tiles/mountain_tile.png') center/cover;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    .element-interaction-container {
+        margin-top: 0px;
+    }
+
+    .current-element-interaction {
+        width: 150px;
+        height: 175px;
+        margin-top: 0px;
+        margin-bottom: 45px;
+    }
+
+    .element-cell {
+        width: 40px;
+        height: 40px;
+    }
+}

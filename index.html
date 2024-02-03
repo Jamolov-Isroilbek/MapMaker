@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mapmaker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="game-header">
+        <h1 class="map-title">Potato Map</h1>
+        <div class="scores-container">
+            <div class="seasons-container">
+                <div class="season" id="spring">
+                    <h4>Spring: <span class="points">0</span> points</h4>
+                    <span class="mission-score" id="missionAScore"></span>
+                    <span class="mission-score" id="missionBScore"></span>
+                </div>
+                <div class="season" id="summer">
+                    <h4>Summer: <span class="points">0</span> points</h4>
+                    <span class="mission-score" id="missionBScore"></span>
+                    <span class="mission-score" id="missionCScore"></span>
+                </div>
+                <div class="season" id="autumn">
+                    <h4>Autumn: <span class="points">0</span> points</h4>
+                    <span class="mission-score" id="missionCScore"></span>
+                    <span class="mission-score" id="missionDScore"></span>
+                </div>
+                <div class="season" id="winter">
+                    <h4>Winter: <span class="points">0</span> points</h4>
+                    <span class="mission-score" id="missionAScore"></span>
+                    <span class="mission-score" id="missionDScore"></span>
+                </div>
+            </div>
+            <div class="total-score">Total: <span class="points" id="totalPoints">0</span> points</div>
+        </div>
+    </header>
+
+    <main class="game-main">
+        <section class="map-section">
+            <div class="grid-map"></div>
+        </section>
+        <!-- Current Season Display -->
+        <section class="side-content">
+            <section class="current-season-display">
+                <h2>Current season: <span id="currentSeason">Spring (AB)</span></h2>
+                <hr>
+            </section>
+
+            <!-- Missions Display -->
+            <section class="missions-display">
+                <div class="mission-grid">
+                    <div class="mission" id="missionA">
+                        <img src="assets/missions/borderlands.png" alt="Mission 1">
+                        <div class="mission-score"><span id="missionScore">0</span> points <span id="letter">A</span></div>
+                    </div>
+                    
+                    <div class="mission" id="missionB">
+                        <img src="assets/missions/watering_canal.png" alt="Mission 1">
+                        <div class="mission-score"><span id="missionScore">0</span> points <span id="letter">B</span></div>
+                    </div>
+
+                    <div class="mission" id="missionC">
+                        <img src="assets/missions/watering_potatoes.png" alt="Mission 1">
+                        <div class="mission-score"><span id="missionScore">0</span> points <span id="letter">C</span></div>
+                    </div>
+                   
+                    <div class="mission" id="missionD">
+                        <img src="assets/missions/tree_line.png" alt="Mission 1">
+                        <div class="mission-score"><span id="missionScore">0</span> points <span id="letter">D</span></div>
+                    </div> 
+                </div>
+            </section>
+
+            <!-- Elapsed Time Display -->
+            <section class="elapsed-time-display">
+                <h2>Elapsed time in current season: <span id="elapsedTime">0</span>/7</h2>
+                <hr>
+            </section>
+
+            <!-- Current Element Interaction -->
+            <h2>Current element:</h2>
+            <section class="element-interaction-container">        
+                <div class="current-element-buttons">
+                    <button id="rotate-button" class="action-button">Rotate</button>
+                    <button id="flip-button" class="action-button">Flip</button>    
+                </div>
+                <section class="current-element-interaction">
+                    <div class="time-unit-display">
+                        <span id="timeUnit">1</span>
+                        <img src="assets/tiles/clock.png" alt="Time Unit Clock" class="clock-image">
+                    </div>
+
+                    <div class="element-grid">
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                        <div class="element-cell"></div>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <!-- The rest of your HTML goes here -->
+
+    <script src="script.js"></script>
+</body>
+</html>
