@@ -1,44 +1,175 @@
-<Isroilbek Jamolov>
-<DXFV5Y>
-Web programming - assignment
-This solution was submitted and created by the student above for the Web Programming course.
-I declare that this solution is my own work. I did not copy or use it from a third party
-solutions from third parties. I did not forward my solution to my fellow students, nor did I publish it.
-Eötvös Loránd University Student Requirements System
-(Organizational and Operational Regulations of ELTE, Volume II, § 74/C) states that as long as,
-as long as a student has been working on the work - or at least a significant part of it - of another student
-of another student's work as his or her own, it is a disciplinary offence.
-The most serious consequence of a disciplinary offence is dismissal from the university.
+# The Mapmaker
 
-### Minimal requirements (not accepted without them, 8 points)
-[x] Square grid: After starting the game, a 11x11 map with the mountains in the right place is drawn (1 point)
-[x] Placement: One of the map elements is randomly displayed with the corresponding time units (1 point)
-[x] Placement: We can place the map element on the grid (anywhere) (2 points).
-[x] Time: The game lasts up to 28 units of time, and by placing a map element down, you subtract the unit of time associated with that map element. (1 point)
-[x] Mission: you can calculate the score of the mission "Borderlands" (1 point).
-[x] End of game: for each mission, it calculates how many points have been scored for that mission (1 point)
-[x] End of game: At the end of the game, after the 28 time units have elapsed, it calculates the score for the basic mission "Borderlands" and displays the number of points scored (1 point)
+A browser-based tile-placement strategy game where players place terrain elements on an 11×11 grid across four seasons, scoring points based on randomly selected mission objectives.
 
-### Normal requirements (12 points)
-[x] Placement: You can place the map element correctly (2 points).
-[x] Placement: The displayed map element can be rotated and placed in this way (1 point)
-[x] Placement: The displayed map element can be mirrored and placed in this way (1 point)
-[x] Mission: the mission "Edge of the forest" is displayed and can be scored (1 point)
-[x] Mission: the mission "Sleepy valley" is displayed and can be scored (1 point)
-[x] Mission: the mission "Watering potatoes" is displayed and can be scored (1 point)
-[x] Season: the game is played over 4 seasons, each season lasts for 7 time units, the mission cards for each season are highlighted. (1 point)
-[x] Season: At the end of each season, the end-of-season score is calculated from the corresponding mission cards and the game continues to the next season. (1 point)
-[x] Mission: 1 extra point can be earned by completely encircling the mountains, which will be added to your score at the end of each season (or game) (1 point)
-[x] End of game: at the end of the game, the total score over the four seasons is displayed (1 point).
-[x] Good-looking appearance (1 point)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 
-### Extra requirements (10 points)
-[x] Mission: Tree line (1 point)
-[x] Mission: Watering canal (1 point)
-[x] Mission: Wealthy town(1 point)
-[x] Mission: Magicians' valley (1 point)
-[x] Mission: Empty site (1 point)
-[x] Mission: Terraced House (1 point)
-[x] Mission: Odd silos (1 point)
-[x] Mission: Rich countryside (1 point)
-[ ] Save: The game saves its state continuously to localStorage. When loading a page, if there is such a saved state, it is loaded from there, otherwise a new game is started. At the end of the game, the saved state is deleted (2 points).
+## Overview
+
+The Mapmaker is a single-player strategy game inspired by roll-and-write board games. Each turn, players must place a randomly drawn terrain shape onto the map, planning ahead to maximize points from four mission cards that score at different times throughout the game.
+
+### Key Features
+
+- **Strategic Gameplay** — Place terrain tiles (forest, water, town, farm) while managing time units across four seasons
+- **Dynamic Missions** — 12 unique scoring objectives randomly assigned each game
+- **Shape Manipulation** — Rotate and flip tiles to optimize placement
+- **Real-time Feedback** — Visual preview shows valid/invalid placement positions
+- **Season Scoring** — Different mission combinations score at the end of each season
+
+## Game Preview
+
+![Game Preview](docs/preview.png)
+
+## Game Rules
+
+### Objective
+
+Maximize your score by strategically placing terrain tiles to fulfill mission objectives across four seasons (Spring, Summer, Autumn, Winter).
+
+### Gameplay Flow
+
+```mermaid
+flowchart LR
+    A[Draw Shape] --> B[Rotate/Flip]
+    B --> C[Place on Grid]
+    C --> D{Season End?}
+    D --> |No| A
+    D --> |Yes| E[Score Missions]
+    E --> F{Game End?}
+    F --> |No| A
+    F --> |Yes| G[Final Score]
+```
+
+### Season Structure
+
+| Season | Time Units | Missions Scored |
+|--------|------------|-----------------|
+| Spring | 1-7 | A + B |
+| Summer | 8-14 | B + C |
+| Autumn | 15-21 | C + D |
+| Winter | 22-28 | D + A |
+
+### Mission Types
+
+| Mission | Scoring Rule |
+|---------|--------------|
+| Borderlands | 6 points per completed row or column |
+| Edge of the Forest | 1 point per forest tile on map edges |
+| Sleepy Valley | 4 points per row with exactly 3 forests |
+| Watering Potatoes | 2 points per water tile adjacent to farms |
+| Tree Line | 2 points per tile in longest vertical forest line |
+| Watering Canal | 4 points per column with equal farm/water counts |
+| Wealthy Town | 3 points per town adjacent to 3+ terrain types |
+| Magicians Valley | 3 points per water tile adjacent to mountains |
+| Empty Site | 2 points per empty tile adjacent to towns |
+| Row of Houses | 2 points per tile in longest horizontal town line |
+| Odd Numbered Silos | 10 points per completed odd-numbered column |
+| Rich Countryside | 4 points per row with 5+ terrain types |
+
+### Bonus Points
+
+Completely surrounding a mountain with terrain tiles awards 1 bonus point per season.
+
+## Project Structure
+
+```
+mapmaker/
+├── index.html          # Game markup
+├── styles.css          # Styling with CSS custom properties
+├── script.js           # Game logic (modular architecture)
+├── assets/
+│   ├── tiles/          # Terrain and UI sprites
+│   │   ├── base_tile.png
+│   │   ├── forest_tile.png
+│   │   ├── water_tile.png
+│   │   ├── town_tile.png
+│   │   ├── farm_tile.png
+│   │   ├── mountain_tile.png
+│   │   └── clock.png
+│   └── missions/       # Mission card images (12 total)
+│       ├── borderlands.png
+│       ├── edge_of_the_forest.png
+│       └── ...
+└── README.md
+```
+
+## Technical Implementation
+
+### Architecture
+
+The codebase follows a modular architecture with clear separation of concerns:
+
+| Module | Responsibility |
+|--------|----------------|
+| `CONFIG` | Game constants and configuration |
+| `GameState` | Centralized state management |
+| `GridUtils` | Grid traversal and validation helpers |
+| `ShapeUtils` | Shape transformation operations |
+| `DOM` | DOM element access abstraction |
+| `Renderer` | All UI rendering logic |
+| `MissionScoring` | Mission calculation algorithms |
+| `GameController` | Core game loop and event handling |
+
+### Key Design Decisions
+
+- **State Management** — Single `GameState` object prevents scattered global variables and provides clear data flow
+- **Utility Abstractions** — Common patterns like neighbor checking and grid validation are extracted into reusable functions
+- **Separation of Concerns** — Rendering logic is isolated from game logic, making the code easier to test and modify
+- **CSS Custom Properties** — Colors and dimensions defined as variables for consistent styling
+
+## Getting Started
+
+### Running Locally
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Jamolov-Isroilbek/mapmaker.git
+cd mapmaker
+```
+
+2. Serve with a local server:
+```bash
+# Using Python
+python3 -m http.server 8000
+
+# Using Node.js
+npx serve
+
+# Using PHP
+php -S localhost:8000
+```
+
+3. Open `http://localhost:8000` in your browser
+
+### Browser Support
+
+| Browser | Version |
+|---------|---------|
+| Chrome | 80+ |
+| Firefox | 75+ |
+| Safari | 13+ |
+| Edge | 80+ |
+
+## Future Enhancements
+
+- [ ] LocalStorage save/load functionality
+- [ ] Undo last placement
+- [ ] Improved responsive design for tablets
+- [ ] Sound effects and animations
+- [ ] High score leaderboard
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Author
+
+**Isroilbek Jamolov** — [GitHub](https://github.com/Jamolov-Isroilbek)
+
+---
+
+<p align="center">
+  <i>Built as a portfolio project demonstrating vanilla JavaScript game development</i>
+</p>

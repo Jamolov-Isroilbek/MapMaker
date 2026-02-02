@@ -1,1240 +1,808 @@
-const mountainCoordinates = [
+/**
+ * The Mapmaker - A tile-placement strategy game
+ * 
+ * Players place terrain elements on an 11x11 grid across four seasons,
+ * scoring points based on randomly selected mission objectives.
+ */
+
+// =============================================================================
+// CONFIGURATION & CONSTANTS
+// =============================================================================
+
+const CONFIG = {
+    GRID_SIZE: 11,
+    TOTAL_TIME_UNITS: 28,
+    TIME_PER_SEASON: 7,
+    MOUNTAIN_BONUS: 1,
+    
+    TERRAIN_TYPES: ['forest', 'water', 'town', 'farm'],
+    
+    SEASONS: ['Spring', 'Summer', 'Autumn', 'Winter'],
+    
+    SEASON_MISSIONS: {
+        Spring: ['A', 'B'],
+        Summer: ['B', 'C'],
+        Autumn: ['C', 'D'],
+        Winter: ['A', 'D']
+    }
+};
+
+const MOUNTAIN_COORDINATES = [
     { row: 2, column: 2 },
     { row: 4, column: 9 },
     { row: 6, column: 4 },
     { row: 9, column: 10 },
-    { row: 10, column: 6 },
+    { row: 10, column: 6 }
 ];
 
-const elements = [
-    {
-        time: 2,
-        type: "water",
-        shape: [[1, 1, 1]],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "town",
-        shape: [[1, 1, 1]],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 1,
-        type: "forest",
-        shape: [
-            [1, 1, 0],
-            [0, 1, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "farm",
-        shape: [
-            [1, 1, 1],
-            [0, 0, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "forest",
-        shape: [
-            [1, 1, 1],
-            [0, 0, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "town",
-        shape: [
-            [1, 1, 1],
-            [0, 1, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "farm",
-        shape: [
-            [1, 1, 1],
-            [0, 1, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 1,
-        type: "town",
-        shape: [
-            [1, 1],
-            [1, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 1,
-        type: "town",
-        shape: [
-            [1, 1, 1],
-            [1, 1, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 1,
-        type: "farm",
-        shape: [
-            [1, 1, 0],
-            [0, 1, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 1,
-        type: "farm",
-        shape: [
-            [0, 1, 0],
-            [1, 1, 1],
-            [0, 1, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "water",
-        shape: [
-            [1, 1, 1],
-            [1, 0, 0],
-            [1, 0, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "water",
-        shape: [
-            [1, 0, 0],
-            [1, 1, 1],
-            [1, 0, 0],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "forest",
-        shape: [
-            [1, 1, 0],
-            [0, 1, 1],
-            [0, 0, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "forest",
-        shape: [
-            [1, 1, 0],
-            [0, 1, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
-    {
-        time: 2,
-        type: "water",
-        shape: [
-            [1, 1],
-            [1, 1],
-        ],
-        rotation: 0,
-        mirrored: false,
-    },
+const ELEMENTS = [
+    { time: 2, type: 'water', shape: [[1, 1, 1]] },
+    { time: 2, type: 'town', shape: [[1, 1, 1]] },
+    { time: 1, type: 'forest', shape: [[1, 1, 0], [0, 1, 1]] },
+    { time: 2, type: 'farm', shape: [[1, 1, 1], [0, 0, 1]] },
+    { time: 2, type: 'forest', shape: [[1, 1, 1], [0, 0, 1]] },
+    { time: 2, type: 'town', shape: [[1, 1, 1], [0, 1, 0]] },
+    { time: 2, type: 'farm', shape: [[1, 1, 1], [0, 1, 0]] },
+    { time: 1, type: 'town', shape: [[1, 1], [1, 0]] },
+    { time: 1, type: 'town', shape: [[1, 1, 1], [1, 1, 0]] },
+    { time: 1, type: 'farm', shape: [[1, 1, 0], [0, 1, 1]] },
+    { time: 1, type: 'farm', shape: [[0, 1, 0], [1, 1, 1], [0, 1, 0]] },
+    { time: 2, type: 'water', shape: [[1, 1, 1], [1, 0, 0], [1, 0, 0]] },
+    { time: 2, type: 'water', shape: [[1, 0, 0], [1, 1, 1], [1, 0, 0]] },
+    { time: 2, type: 'forest', shape: [[1, 1, 0], [0, 1, 1], [0, 0, 1]] },
+    { time: 2, type: 'forest', shape: [[1, 1, 0], [0, 1, 1]] },
+    { time: 2, type: 'water', shape: [[1, 1], [1, 1]] }
 ];
 
-const missions = {
+const MISSIONS = {
     basic: [
-        {
-            title: "Edge of the forest",
-            description:
-                "You get one point for each forest field adjacent to the edge of your map.",
-        },
-        {
-            title: "Sleepy valley",
-            description:
-                "For every row with three forest fields, you get four points.",
-        },
-        {
-            title: "Watering potatoes",
-            description:
-                "You get two points for each water field adjacent to your farm fields.",
-        },
-        {
-            title: "Borderlands",
-            description: "For each full row or column, you get six points.",
-        },
+        { title: 'Edge of the forest', description: 'One point for each forest field adjacent to the edge of your map.' },
+        { title: 'Sleepy valley', description: 'Four points for every row with exactly three forest fields.' },
+        { title: 'Watering potatoes', description: 'Two points for each water field adjacent to your farm fields.' },
+        { title: 'Borderlands', description: 'Six points for each full row or column.' }
     ],
     extra: [
-        {
-            title: "Tree line",
-            description:
-                "You get two points for each of the fields in the longest vertically uninterrupted continuous forest. If there are two or more tree lines with the same longest length, only one counts.",
-        },
-        {
-            title: "Watering canal",
-            description:
-                "For each column of your map that has the same number of farm and water fields, you will receive four points. You must have at least one field of both terrain types in your column to score points.",
-        },
-        {
-            title: "Wealthy town",
-            description:
-                "You get three points for each of your village fields adjacent to at least three different terrain types.",
-        },
-        {
-            title: "Magicians valley",
-            description:
-                "You get three points for your water fields adjacent to your mountain fields.",
-        },
-        {
-            title: "Empty site",
-            description:
-                "You get two points for empty fields adjacent to your village fields.",
-        },
-        {
-            title: "Row of houses",
-            description:
-                "For each field in the longest village fields that are horizontally uninterrupted and contiguous you will get two points.",
-        },
-        {
-            title: "Odd numbered silos",
-            description:
-                "For each of your odd numbered full columns you get 10 points.",
-        },
-        {
-            title: "Rich countryside",
-            description:
-                "For each row with at least five different terrain types, you will receive four points.",
-        },
-    ],
+        { title: 'Tree line', description: 'Two points per field in the longest vertical uninterrupted forest line.' },
+        { title: 'Watering canal', description: 'Four points for columns with equal farm and water fields (at least one each).' },
+        { title: 'Wealthy town', description: 'Three points for each town adjacent to at least three different terrain types.' },
+        { title: 'Magicians valley', description: 'Three points for each water field adjacent to mountains.' },
+        { title: 'Empty site', description: 'Two points for each empty field adjacent to town fields.' },
+        { title: 'Row of houses', description: 'Two points per field in the longest horizontal uninterrupted town line.' },
+        { title: 'Odd numbered silos', description: 'Ten points for each fully filled odd-numbered column.' },
+        { title: 'Rich countryside', description: 'Four points for each row with at least five different terrain types.' }
+    ]
 };
 
-const gridSize = 11;
-let timeUnitsRemaining = 28;
-let gridArray = [];
-let previewYesCells = []; // Array to store coordinates of "preview-yes" cells
-let missionA = null;
-let missionB = null;
-let missionC = null;
-let missionD = null;
-let missionATotalScore = 0;
-let missionBTotalScore = 0;
-let missionCTotalScore = 0;
-let missionDTotalScore = 0;
-let totalScore = 0;
-let isGameOver = false;
-let nextElement = getRandomShape();
-let currentElement = displayRandomShape();
-let currentElementShape = currentElement.shape;
+// =============================================================================
+// GAME STATE
+// =============================================================================
 
-// Initializing the game when DOM is fully loaded
-document.addEventListener("DOMContentLoaded", function () {
-    initGame();
-    highlightMissions('missionA', 'missionB');
-});
+const GameState = {
+    grid: [],
+    timeRemaining: CONFIG.TOTAL_TIME_UNITS,
+    isGameOver: false,
+    
+    currentElement: null,
+    currentShape: null,
+    nextElement: null,
+    
+    missions: { A: null, B: null, C: null, D: null },
+    missionScores: { A: 0, B: 0, C: 0, D: 0 },
+    totalScore: 0,
+    
+    previewCells: [],
+    availableMissions: null,
 
-// Initializing game settings and grid
-function initGame() {
-
-    // Select the container where the grid map will be placed
-    const mapContainer = document.querySelector(".grid-map");
-
-    // Initialize the time units
-    timeUnitsRemaining = 28;
-
-    // Reset and create the grid map
-    mapContainer.innerHTML = ""; // Clear previous map
-    createMap(mountainCoordinates, mapContainer);
-
-    // Display the first element
-    currentElement = displayRandomShape();
-    currentElementShape = currentElement.shape;
-
-    // Get random missions and update mission iamges
-    missionA = getRandomMission();
-    missionB = getRandomMission();
-    missionC = getRandomMission();
-    missionD = getRandomMission();
-
-    // Update mission images in the HTML
-    if (missionA !== null && missionB !== null && missionC !== null && missionD !== null) {
-        document.getElementById("missionA").querySelector("img").src = `assets/missions/${convertToImageFilename(missionA.title)}.png`;
-        document.getElementById("missionB").querySelector("img").src = `assets/missions/${convertToImageFilename(missionB.title)}.png`;
-        document.getElementById("missionC").querySelector("img").src = `assets/missions/${convertToImageFilename(missionC.title)}.png`;
-        document.getElementById("missionD").querySelector("img").src = `assets/missions/${convertToImageFilename(missionD.title)}.png`;
-
-    } else {
-        console.log('mission is null');
+    reset() {
+        this.grid = [];
+        this.timeRemaining = CONFIG.TOTAL_TIME_UNITS;
+        this.isGameOver = false;
+        this.currentElement = null;
+        this.currentShape = null;
+        this.nextElement = null;
+        this.missions = { A: null, B: null, C: null, D: null };
+        this.missionScores = { A: 0, B: 0, C: 0, D: 0 };
+        this.totalScore = 0;
+        this.previewCells = [];
+        this.availableMissions = [...MISSIONS.basic, ...MISSIONS.extra];
     }
+};
 
-    // Set up event listeners for game interaction, such as placing elements
-    setUpEventListeners();
-}
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
 
-// Convert mission title to a filename format
-function convertToImageFilename(title) {
-    // Replace spaces with underscores and convert to lower case for the filename
-    return title.replace(/\s+/g, '_').toLowerCase();
-}
+const GridUtils = {
+    isValidPosition(x, y) {
+        return x >= 0 && x < CONFIG.GRID_SIZE && y >= 0 && y < CONFIG.GRID_SIZE;
+    },
 
-// Setting up your event listeners for user interactions
-function setUpEventListeners() {
-    // Attach event listener for mouseover to preview element placement
-    document.querySelector(".grid-map").addEventListener("mouseover", (event) => {
-        let targetCell = event.target;
-        let hoverPosition = getCoordinatesFromGridCell(targetCell);
-        if (hoverPosition !== null) {
-            previewElementOnGrid(currentElementShape, hoverPosition);
-        }
-    });
+    isCellEmpty(x, y) {
+        return this.isValidPosition(x, y) && GameState.grid[y][x] === 0;
+    },
 
-    document.querySelector(".grid-map").addEventListener("click", (event) => {
-        let targetCell = event.target;
-        let hoverPosition = getCoordinatesFromGridCell(targetCell);
+    getCellValue(x, y) {
+        return this.isValidPosition(x, y) ? GameState.grid[y][x] : null;
+    },
 
-        // If the clicked are is not a cell but a background of the map
-        if (hoverPosition === null) return;
-        const clickedPreviewYes = previewYesCells.find(
-            (cell) => cell.x === hoverPosition.x && cell.y === hoverPosition.y
-        );
+    getOrthogonalNeighbors(x, y) {
+        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+        return directions
+            .map(([dx, dy]) => ({ x: x + dx, y: y + dy }))
+            .filter(pos => this.isValidPosition(pos.x, pos.y));
+    },
 
-        if (isShapeWithOtherOnes(currentElementShape) || clickedPreviewYes) {
-            // Check if the placement will be within the map boundaries
-            if (
-                hoverPosition.x + currentElementShape[0].length <= gridSize &&
-                hoverPosition.y + currentElementShape.length <= gridSize
-            ) {
-                placeShape(currentElementShape, hoverPosition);
-            }
-        }
+    countTerrainInRow(row, terrain) {
+        return GameState.grid[row].filter(cell => cell === terrain).length;
+    },
 
-    });
+    countTerrainInColumn(col, terrain) {
+        return GameState.grid.filter(row => row[col] === terrain).length;
+    },
 
-    document.querySelector("#rotate-button").addEventListener("click", () => {
-        currentElementShape = rotateShape(currentElementShape);
-        displayShape(currentElementShape, currentElement.type);
-    });
+    isRowComplete(row) {
+        return GameState.grid[row].every(cell => cell !== 0);
+    },
 
-    document.querySelector("#flip-button").addEventListener("click", () => {
-        currentElementShape = flipShape(currentElementShape);
-        displayShape(currentElementShape, currentElement.type);
-    });
-}
-
-// Creating the grid map with mountains
-function createMap(mountainCoordinates, mapContainer) {
-    for (let row = 1; row <= 11; row++) {
-        let rowArray = [];
-        for (let column = 1; column <= 11; column++) {
-            const cell = document.createElement("div");
-            cell.classList.add("grid-cell");
-            cell.setAttribute("data-x", column);
-            cell.setAttribute("data-y", row);
-
-            const isMountain = mountainCoordinates.some(
-                (coord) => coord.row === row && coord.column === column
-            );
-            if (isMountain) {
-                cell.classList.add("grid-mountain");
-                rowArray.push(1);
-            } else {
-                rowArray.push(0);
-            }
-
-            mapContainer.appendChild(cell);
-        }
-        gridArray.push(rowArray);
+    isColumnComplete(col) {
+        return GameState.grid.every(row => row[col] !== 0);
     }
-}
+};
 
-// Getting coordinates from a grid cell element
-function getCoordinatesFromGridCell(targetCell) {
-    if (targetCell.classList.contains("grid-cell")) {
-        const x = parseInt(targetCell.getAttribute("data-x"), 10) - 1;
-        const y = parseInt(targetCell.getAttribute("data-y"), 10) - 1;
-        return { x, y };
-    }
-    return null; // Return null if it's not a grid cell
-}
-
-// Selecting a random element from the elements array
-function getRandomShape() {
-    const randomIndex = Math.floor(Math.random() * elements.length);
-    return elements[randomIndex];
-}
-
-// Displaying a given element shape and type
-function displayShape(shape, type) {
-    const elementGrid = document.querySelector(".element-grid");
-
-    // Determine the size of the element's shape
-    const height = shape.length;
-    const width = shape[0].length;
-
-    // Calculate the grid template columns and rows based on shape size
-    elementGrid.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
-    elementGrid.style.gridTemplateRows = `repeat(${height}, 1fr)`;
-
-    // Clear the previous element grid
-    elementGrid.innerHTML = "";
-
-    // Display the element
-    shape.forEach((row) => {
-        row.forEach((cell) => {
-            const elementCell = document.createElement("div");
-            elementCell.classList.add("element-cell");
-
-            // If the cell is part of the shape, add the specific class for its type
-            if (cell === 1) {
-                elementCell.classList.add(type);
-            } else {
-                elementCell.classList.add("empty-cell");
-            }
-
-            elementGrid.appendChild(elementCell);
-        });
-    });
-
-    // You can add additional logic here to handle any other attributes or information related to the element
-
-    return {
-        shape: shape,
-        type: type,
-    };
-}
-
-// Previewing an element on the grid based on mouse hover position
-function displayRandomShape() {
-    // Select a random element from the elements array
-    const elementGrid = document.querySelector(".element-grid");
-    const randomElement = nextElement;
-
-    // Determine the size of the current element's shape
-    const height = randomElement.shape.length;
-    const width = randomElement.shape[0].length;
-
-    // Calculate the grid template columns and rows based on shape size
-    elementGrid.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
-    elementGrid.style.gridTemplateRows = `repeat(${height}, 1fr)`;
-
-    // Clear the previous element grid
-    elementGrid.innerHTML = "";
-
-    // Display the new element
-    randomElement.shape.forEach((row) => {
-        row.forEach((cell) => {
-            const elementCell = document.createElement("div");
-            elementCell.classList.add("element-cell");
-
-            // If the cell is part of the shape, add the specific class for its type
-            if (cell === 1) {
-                elementCell.classList.add(randomElement.type);
-            } else {
-                elementCell.classList.add("empty-cell");
-            }
-
-            elementGrid.appendChild(elementCell);
-        });
-    });
-
-    // Update the time unit display
-    const timeUnitDisplay = document.querySelector("#timeUnit");
-    timeUnitDisplay.textContent = randomElement.time;
-
-    return randomElement;
-}
-
-// Placing an element on the grid
-function previewElementOnGrid(elementShape, hoverPosition) {
-    // Clear previous preview classes and reset the array
-    document.querySelectorAll(".preview-yes, .preview-no").forEach((cell) => {
-        cell.classList.remove("preview-yes", "preview-no");
-    });
-    previewYesCells = [];
-
-    const gridSize = gridArray.length;
-    const height = elementShape.length;
-    const width = elementShape[0].length;
-
-    // Calculate the maximum allowable position for the top-left corner of the shape
-    const maxStartX = gridSize - width;
-    const maxStartY = gridSize - height;
-
-    // Ensure that the hover position is within the bounds
-    hoverPosition.x = Math.min(hoverPosition.x, maxStartX);
-    hoverPosition.y = Math.min(hoverPosition.y, maxStartY);
-
-    let collision = false;
-
-    // Check if any part of the shape fits within the visible grid area
-    for (let i = 0; i < height; i++) {
+const ShapeUtils = {
+    rotate(shape) {
+        const height = shape.length;
+        const width = shape[0].length;
+        const rotated = [];
+        
         for (let j = 0; j < width; j++) {
-            if (elementShape[i][j]) {
-                let x = hoverPosition.x + j;
-                let y = hoverPosition.y + i;
+            rotated.push(shape.map(row => row[j]).reverse());
+        }
+        return rotated;
+    },
 
-                if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
-                    collision = true;
-                    continue;
+    flip(shape) {
+        return shape.map(row => [...row].reverse());
+    },
+
+    hasActiveCells(shape) {
+        return shape.some(row => row.some(cell => cell === 1));
+    },
+
+    getDimensions(shape) {
+        return { width: shape[0].length, height: shape.length };
+    },
+
+    getActiveCellPositions(shape, offsetX = 0, offsetY = 0) {
+        const positions = [];
+        shape.forEach((row, y) => {
+            row.forEach((cell, x) => {
+                if (cell === 1) {
+                    positions.push({ x: offsetX + x, y: offsetY + y });
                 }
+            });
+        });
+        return positions;
+    }
+};
 
-                if (gridArray[y][x] !== 0) {
-                    collision = true;
+// =============================================================================
+// DOM UTILITIES
+// =============================================================================
+
+const DOM = {
+    elements: {
+        gridMap: () => document.querySelector('.grid-map'),
+        elementGrid: () => document.querySelector('.element-grid'),
+        timeUnit: () => document.querySelector('#timeUnit'),
+        elapsedTime: () => document.querySelector('#elapsedTime'),
+        currentSeason: () => document.querySelector('#currentSeason'),
+        totalPoints: () => document.querySelector('#totalPoints'),
+        rotateButton: () => document.querySelector('#rotate-button'),
+        flipButton: () => document.querySelector('#flip-button')
+    },
+
+    getGridCell(x, y) {
+        return document.querySelector(`.grid-cell[data-x='${x + 1}'][data-y='${y + 1}']`);
+    },
+
+    getCellCoordinates(cell) {
+        if (!cell.classList.contains('grid-cell')) return null;
+        return {
+            x: parseInt(cell.dataset.x, 10) - 1,
+            y: parseInt(cell.dataset.y, 10) - 1
+        };
+    },
+
+    getMissionElement(letter) {
+        return document.querySelector(`#mission${letter}`);
+    },
+
+    getMissionScoreElement(letter) {
+        return this.getMissionElement(letter)?.querySelector('#missionScore');
+    },
+
+    getSeasonElement(season) {
+        return document.querySelector(`#${season.toLowerCase()}`);
+    }
+};
+
+// =============================================================================
+// RENDERING
+// =============================================================================
+
+const Renderer = {
+    createGrid() {
+        const container = DOM.elements.gridMap();
+        container.innerHTML = '';
+        
+        for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+            const rowArray = [];
+            
+            for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('grid-cell');
+                cell.dataset.x = col + 1;
+                cell.dataset.y = row + 1;
+
+                const isMountain = MOUNTAIN_COORDINATES.some(
+                    coord => coord.row === row + 1 && coord.column === col + 1
+                );
+                
+                if (isMountain) {
+                    cell.classList.add('grid-mountain');
+                    rowArray.push(1);
                 } else {
-                    // Store the coordinates of "preview-yes" cells
-                    previewYesCells.push({ x, y });
+                    rowArray.push(0);
+                }
+                
+                container.appendChild(cell);
+            }
+            GameState.grid.push(rowArray);
+        }
+    },
+
+    updateGrid() {
+        const cells = document.querySelectorAll('.grid-cell');
+        
+        cells.forEach((cell, index) => {
+            const x = index % CONFIG.GRID_SIZE;
+            const y = Math.floor(index / CONFIG.GRID_SIZE);
+            
+            if (cell.classList.contains('grid-mountain')) return;
+            
+            const terrain = GameState.grid[y][x];
+            cell.className = 'grid-cell';
+            
+            if (terrain !== 0) {
+                cell.classList.add('element-cell', terrain);
+            } else {
+                cell.classList.add('empty-cell');
+            }
+        });
+    },
+
+    displayElement(shape, type) {
+        const grid = DOM.elements.elementGrid();
+        const { width, height } = ShapeUtils.getDimensions(shape);
+        
+        grid.style.gridTemplateColumns = `repeat(${width}, 1fr)`;
+        grid.style.gridTemplateRows = `repeat(${height}, 1fr)`;
+        grid.innerHTML = '';
+        
+        shape.forEach(row => {
+            row.forEach(cell => {
+                const div = document.createElement('div');
+                div.classList.add('element-cell');
+                div.classList.add(cell === 1 ? type : 'empty-cell');
+                grid.appendChild(div);
+            });
+        });
+    },
+
+    updateTimeDisplay() {
+        const elapsed = CONFIG.TOTAL_TIME_UNITS - GameState.timeRemaining;
+        const seasonTime = elapsed % CONFIG.TIME_PER_SEASON;
+        
+        DOM.elements.elapsedTime().textContent = seasonTime;
+        DOM.elements.timeUnit().textContent = GameState.currentElement?.time || 0;
+    },
+
+    updateSeasonDisplay(season) {
+        const nextSeasonIndex = (CONFIG.SEASONS.indexOf(season) + 1) % 4;
+        const nextSeason = CONFIG.SEASONS[nextSeasonIndex];
+        const missions = CONFIG.SEASON_MISSIONS[nextSeason].join('');
+        DOM.elements.currentSeason().textContent = `${nextSeason} (${missions})`;
+    },
+
+    updateSeasonScore(season, score) {
+        const element = DOM.getSeasonElement(season);
+        element.querySelector('.points').textContent = score;
+    },
+
+    updateTotalScore() {
+        DOM.elements.totalPoints().textContent = GameState.totalScore;
+    },
+
+    updateMissionScore(letter) {
+        const scoreElement = DOM.getMissionScoreElement(letter);
+        if (scoreElement) {
+            scoreElement.textContent = GameState.missionScores[letter];
+        }
+    },
+
+    updateMissionImage(letter, mission) {
+        const element = DOM.getMissionElement(letter);
+        if (element && mission) {
+            const filename = mission.title.replace(/\s+/g, '_').toLowerCase();
+            element.querySelector('img').src = `assets/missions/${filename}.png`;
+        }
+    },
+
+    highlightActiveMissions(season) {
+        document.querySelectorAll('.mission').forEach(el => {
+            el.classList.remove('highlighted-mission');
+        });
+        
+        CONFIG.SEASON_MISSIONS[season].forEach(letter => {
+            DOM.getMissionElement(letter)?.classList.add('highlighted-mission');
+        });
+    },
+
+    clearPreview() {
+        document.querySelectorAll('.preview-yes, .preview-no').forEach(cell => {
+            cell.classList.remove('preview-yes', 'preview-no');
+        });
+        GameState.previewCells = [];
+    },
+
+    showPreview(positions, isValid) {
+        const className = isValid ? 'preview-yes' : 'preview-no';
+        
+        positions.forEach(({ x, y }) => {
+            const cell = DOM.getGridCell(x, y);
+            if (cell) cell.classList.add(className);
+        });
+    }
+};
+
+// =============================================================================
+// MISSION SCORING
+// =============================================================================
+
+const MissionScoring = {
+    calculate(mission) {
+        const scoreFunctions = {
+            'Borderlands': this.borderlands,
+            'Edge of the forest': this.edgeOfTheForest,
+            'Sleepy valley': this.sleepyValley,
+            'Watering potatoes': this.wateringPotatoes,
+            'Tree line': this.treeLine,
+            'Watering canal': this.wateringCanal,
+            'Wealthy town': this.wealthyTown,
+            'Magicians valley': this.magiciansValley,
+            'Empty site': this.emptySite,
+            'Row of houses': this.rowOfHouses,
+            'Odd numbered silos': this.oddNumberedSilos,
+            'Rich countryside': this.richCountryside
+        };
+        
+        return scoreFunctions[mission.title]?.() || 0;
+    },
+
+    borderlands() {
+        let score = 0;
+        for (let i = 0; i < CONFIG.GRID_SIZE; i++) {
+            if (GridUtils.isRowComplete(i)) score += 6;
+            if (GridUtils.isColumnComplete(i)) score += 6;
+        }
+        return score;
+    },
+
+    edgeOfTheForest() {
+        let score = 0;
+        const size = CONFIG.GRID_SIZE;
+        
+        // Top and bottom edges
+        for (let x = 0; x < size; x++) {
+            if (GameState.grid[0][x] === 'forest') score++;
+            if (GameState.grid[size - 1][x] === 'forest') score++;
+        }
+        
+        // Left and right edges (excluding corners)
+        for (let y = 1; y < size - 1; y++) {
+            if (GameState.grid[y][0] === 'forest') score++;
+            if (GameState.grid[y][size - 1] === 'forest') score++;
+        }
+        
+        return score;
+    },
+
+    sleepyValley() {
+        let score = 0;
+        for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+            if (GridUtils.countTerrainInRow(row, 'forest') === 3) {
+                score += 4;
+            }
+        }
+        return score;
+    },
+
+    wateringPotatoes() {
+        let score = 0;
+        
+        for (let y = 0; y < CONFIG.GRID_SIZE; y++) {
+            for (let x = 0; x < CONFIG.GRID_SIZE; x++) {
+                if (GameState.grid[y][x] !== 'water') continue;
+                
+                const hasAdjacentFarm = GridUtils.getOrthogonalNeighbors(x, y)
+                    .some(pos => GridUtils.getCellValue(pos.x, pos.y) === 'farm');
+                
+                if (hasAdjacentFarm) score += 2;
+            }
+        }
+        return score;
+    },
+
+    treeLine() {
+        let maxLength = 0;
+        
+        for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+            let currentLength = 0;
+            
+            for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+                if (GameState.grid[row][col] === 'forest') {
+                    currentLength++;
+                    maxLength = Math.max(maxLength, currentLength);
+                } else {
+                    currentLength = 0;
                 }
             }
         }
-    }
+        
+        return maxLength * 2;
+    },
 
-    // Apply 'preview-no' class to the entire shape if there is any collision
-    if (collision) {
-        for (let i = 0; i < height; i++) {
-            for (let j = 0; j < width; j++) {
-                if (elementShape[i][j]) {
-                    let x = hoverPosition.x + j;
-                    let y = hoverPosition.y + i;
+    wateringCanal() {
+        let score = 0;
+        
+        for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+            const farmCount = GridUtils.countTerrainInColumn(col, 'farm');
+            const waterCount = GridUtils.countTerrainInColumn(col, 'water');
+            
+            if (farmCount === waterCount && farmCount > 0) {
+                score += 4;
+            }
+        }
+        return score;
+    },
 
-                    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
-                        let cell = document.querySelector(
-                            `.grid-cell[data-x='${x + 1}'][data-y='${y + 1}']`
-                        );
-                        if (cell) {
-                            cell.classList.add("preview-no");
-                        }
-                    }
+    wealthyTown() {
+        let score = 0;
+        
+        for (let y = 0; y < CONFIG.GRID_SIZE; y++) {
+            for (let x = 0; x < CONFIG.GRID_SIZE; x++) {
+                if (GameState.grid[y][x] !== 'town') continue;
+                
+                const neighborTypes = new Set(
+                    GridUtils.getOrthogonalNeighbors(x, y)
+                        .map(pos => GridUtils.getCellValue(pos.x, pos.y))
+                        .filter(val => val !== 0 && val !== null)
+                );
+                
+                if (neighborTypes.size >= 3) score += 3;
+            }
+        }
+        return score;
+    },
+
+    magiciansValley() {
+        let score = 0;
+        
+        MOUNTAIN_COORDINATES.forEach(mountain => {
+            const x = mountain.column - 1;
+            const y = mountain.row - 1;
+            
+            GridUtils.getOrthogonalNeighbors(x, y).forEach(pos => {
+                if (GridUtils.getCellValue(pos.x, pos.y) === 'water') {
+                    score += 3;
+                }
+            });
+        });
+        
+        return score;
+    },
+
+    emptySite() {
+        let score = 0;
+        
+        for (let y = 0; y < CONFIG.GRID_SIZE; y++) {
+            for (let x = 0; x < CONFIG.GRID_SIZE; x++) {
+                if (GameState.grid[y][x] !== 'town') continue;
+                
+                const emptyNeighbors = GridUtils.getOrthogonalNeighbors(x, y)
+                    .filter(pos => GridUtils.isCellEmpty(pos.x, pos.y)).length;
+                
+                score += emptyNeighbors * 2;
+            }
+        }
+        return score;
+    },
+
+    rowOfHouses() {
+        let maxLength = 0;
+        
+        for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+            let currentLength = 0;
+            
+            for (let col = 0; col < CONFIG.GRID_SIZE; col++) {
+                if (GameState.grid[row][col] === 'town') {
+                    currentLength++;
+                    maxLength = Math.max(maxLength, currentLength);
+                } else {
+                    currentLength = 0;
                 }
             }
         }
-    } else {
-        // Apply 'preview-yes' class to the entire shape if there is no collision
-        for (let i = 0; i < height; i++) {
-            for (let j = 0; j < width; j++) {
-                if (elementShape[i][j]) {
-                    let x = hoverPosition.x + j;
-                    let y = hoverPosition.y + i;
+        
+        return maxLength * 2;
+    },
 
-                    if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
-                        let cell = document.querySelector(
-                            `.grid-cell[data-x='${x + 1}'][data-y='${y + 1}']`
-                        );
-                        if (cell) {
-                            cell.classList.add("preview-yes");
-                        }
-                    }
-                }
+    oddNumberedSilos() {
+        let score = 0;
+        
+        for (let col = 0; col < CONFIG.GRID_SIZE; col += 2) {
+            if (GridUtils.isColumnComplete(col)) {
+                score += 10;
             }
         }
+        return score;
+    },
+
+    richCountryside() {
+        let score = 0;
+        
+        for (let row = 0; row < CONFIG.GRID_SIZE; row++) {
+            const terrainTypes = new Set(
+                GameState.grid[row].filter(cell => cell !== 0)
+            );
+            
+            if (terrainTypes.size >= 5) score += 4;
+        }
+        return score;
+    },
+
+    surroundedMountains() {
+        let count = 0;
+        
+        MOUNTAIN_COORDINATES.forEach(mountain => {
+            const x = mountain.column - 1;
+            const y = mountain.row - 1;
+            
+            const filledNeighbors = GridUtils.getOrthogonalNeighbors(x, y)
+                .filter(pos => !GridUtils.isCellEmpty(pos.x, pos.y)).length;
+            
+            if (filledNeighbors === 4) count++;
+        });
+        
+        return count;
     }
-}
+};
 
-// Checking if an element can be placed on the grid
-function placeShape(elementShape, clickPosition) {
-    let collision = false;
-    const oneCoordinates = [];
+// =============================================================================
+// GAME LOGIC
+// =============================================================================
 
-    //  Check if the game is over, if so, prevent further actions
-    if (isGameOver) {
-        console.log("Game is over, no further  placements allowed.");
-        return;
-    }
+const GameController = {
+    init() {
+        GameState.reset();
+        Renderer.createGrid();
+        
+        this.initializeMissions();
+        this.setupNextElement();
+        this.setupEventListeners();
+        
+        const currentSeason = this.getCurrentSeason();
+        Renderer.highlightActiveMissions(currentSeason);
+        DOM.elements.currentSeason().textContent = `${currentSeason} (${CONFIG.SEASON_MISSIONS[currentSeason].join('')})`;
+    },
 
-    // Check if any part of the shape will go out of bounds or overlap with a non-empty cell
-    for (let i = 0; i < elementShape.length; i++) {
-        for (let j = 0; j < elementShape[i].length; j++) {
-            let x = clickPosition.x + j;
-            let y = clickPosition.y + i;
+    initializeMissions() {
+        ['A', 'B', 'C', 'D'].forEach(letter => {
+            const mission = this.getRandomMission();
+            GameState.missions[letter] = mission;
+            Renderer.updateMissionImage(letter, mission);
+        });
+    },
 
-            // Check if the current part of the shape is within bounds
-            if (x < 0 || x >= gridSize || y < 0 || y >= gridSize) {
-                continue; // Skip the current iteration and move to the next one
-            }
+    getRandomMission() {
+        if (GameState.availableMissions.length === 0) return null;
+        
+        const index = Math.floor(Math.random() * GameState.availableMissions.length);
+        return GameState.availableMissions.splice(index, 1)[0];
+    },
 
-            // Check if the current part of the shape is overlapping with a non-empty cell
-            if (elementShape[i][j] && gridArray[y][x] !== 0) {
-                collision = true;
-                break; // Break out of the loop early since we found an invalid position
-            }
+    setupNextElement() {
+        GameState.nextElement = GameState.nextElement || this.getRandomElement();
+        GameState.currentElement = GameState.nextElement;
+        GameState.currentShape = [...GameState.currentElement.shape.map(row => [...row])];
+        GameState.nextElement = this.getRandomElement();
+        
+        Renderer.displayElement(GameState.currentShape, GameState.currentElement.type);
+        Renderer.updateTimeDisplay();
+    },
 
-            // If the current part of the shape is a 1, record its coordinates
-            if (elementShape[i][j]) {
-                oneCoordinates.push({ x, y });
-            }
+    getRandomElement() {
+        return ELEMENTS[Math.floor(Math.random() * ELEMENTS.length)];
+    },
+
+    setupEventListeners() {
+        const gridMap = DOM.elements.gridMap();
+        
+        gridMap.addEventListener('mouseover', (e) => {
+            const coords = DOM.getCellCoordinates(e.target);
+            if (coords) this.handlePreview(coords);
+        });
+        
+        gridMap.addEventListener('click', (e) => {
+            const coords = DOM.getCellCoordinates(e.target);
+            if (coords) this.handlePlacement(coords);
+        });
+        
+        DOM.elements.rotateButton().addEventListener('click', () => {
+            GameState.currentShape = ShapeUtils.rotate(GameState.currentShape);
+            Renderer.displayElement(GameState.currentShape, GameState.currentElement.type);
+        });
+        
+        DOM.elements.flipButton().addEventListener('click', () => {
+            GameState.currentShape = ShapeUtils.flip(GameState.currentShape);
+            Renderer.displayElement(GameState.currentShape, GameState.currentElement.type);
+        });
+    },
+
+    handlePreview(position) {
+        Renderer.clearPreview();
+        
+        const { width, height } = ShapeUtils.getDimensions(GameState.currentShape);
+        const adjustedPos = {
+            x: Math.min(position.x, CONFIG.GRID_SIZE - width),
+            y: Math.min(position.y, CONFIG.GRID_SIZE - height)
+        };
+        
+        const positions = ShapeUtils.getActiveCellPositions(
+            GameState.currentShape, 
+            adjustedPos.x, 
+            adjustedPos.y
+        );
+        
+        const isValid = positions.every(pos => GridUtils.isCellEmpty(pos.x, pos.y));
+        
+        GameState.previewCells = isValid ? positions : [];
+        Renderer.showPreview(positions, isValid);
+    },
+
+    handlePlacement(clickPos) {
+        if (GameState.isGameOver) return;
+        
+        if (GameState.previewCells.length > 0) {
+            this.placeElement();
         }
-        if (collision) break; // Break out of the outer loop if a collision was found
-    }
+    },
 
-    // If there is no collision, place the element on the grid
-    if (!collision) {
-        // Now you have the coordinates of the 1s in oneCoordinates
-        for (const coord of oneCoordinates) {
-            gridArray[coord.y][coord.x] = currentElement.type; // Set the cell to the current element's type
+    placeElement() {
+        // Place the shape on the grid
+        GameState.previewCells.forEach(({ x, y }) => {
+            GameState.grid[y][x] = GameState.currentElement.type;
+        });
+        
+        GameState.timeRemaining -= GameState.currentElement.time;
+        Renderer.updateGrid();
+        
+        // Check for season end before getting next element
+        const elapsed = CONFIG.TOTAL_TIME_UNITS - GameState.timeRemaining;
+        const currentSeasonTime = elapsed % CONFIG.TIME_PER_SEASON;
+        
+        if (currentSeasonTime === 0 || 
+            (currentSeasonTime === 1 && GameState.currentElement.time === 2)) {
+            this.handleSeasonEnd(elapsed - 1);
         }
-
-        timeUnitsRemaining -= currentElement.time;
-
-        updateGrid();
-        nextElement = getRandomShape();
-
-        let currentTime = 28 - timeUnitsRemaining
-        let currentSeasonTime = currentTime % 7;
-
-        if ((currentSeasonTime === 1 && currentElement.time === 2) || currentSeasonTime === 0) {
-            calculateAndDisplayMissionScores(currentTime - 1);
-        }
-
-        currentElement = displayRandomShape();
-        currentElementShape = currentElement.shape;
-
-        // Call this function to check if the game should end
-        if (!canPlaceShape(currentElementShape, gridArray)) {
-            // End the game
-            alert("Game Over: No legal placements left\n Your total score is: " + totalScore);
-            console.log("Game Over: No legal placements left");
-            isGameOver = true;
+        
+        // Check for game end
+        if (GameState.timeRemaining <= 0) {
+            this.endGame();
             return;
         }
-
-        const elapsedTimeDisplay = document.querySelector("#elapsedTime");
-        elapsedTimeDisplay.textContent = currentSeasonTime;
-
-        // Check if the game is over after placing the element
-        if (timeUnitsRemaining <= 0) {
-            endGame();
-            return; // Exit the function if the game is over
+        
+        // Setup next element
+        this.setupNextElement();
+        
+        // Check if placement is still possible
+        if (!this.canPlaceAnyShape()) {
+            this.endGame('No legal placements remaining');
+            return;
         }
-    }
-}
-
-// Checking if a specific element placement is legal
-function isPlacementLegal(shape, startX, startY, grid) {
-    for (let y = 0; y < shape.length; y++) {
-        for (let x = 0; x < shape[y].length; x++) {
-            if (shape[y][x]) {
-                let posX = startX + x;
-                let posY = startY + y;
-
-                if (posX < 0 || posX >= gridSize || posY < 0 || posY >= gridSize || grid[posY][posX] !== 0) {
-                    return false;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-// Checking for any legal placements left for the current element
-function canPlaceShape(shape, grid) {
-    // Check current shape and its three rotations
-    for (let i = 0; i < 4; i++) { // Four rotations
-        if (checkPlacement(shape, grid)) return true;
-        shape = rotateShape(shape);
-    }
-    return false;
-}
-
-// Checking if an element can be placed on the grid
-function checkPlacement(shape, grid) {
-    for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < gridSize; x++) {
-            if (isPlacementLegal(shape, x, y, grid)) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// Updating the visual representation of the grid
-function updateGrid() {
-    const gridCells = document.querySelectorAll(".grid-cell");
-
-    for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-            const cell = gridCells[i * gridSize + j];
-            const cellX = j;
-            const cellY = i;
-
-            // Check if the cell corresponds to a tile (not a mountain)
-            if (!cell.classList.contains("grid-mountain")) {
-                // Get the type of the tile from gridArray
-                const tileType = gridArray[cellY][cellX];
-
-                // Update the cell's class to reflect the new tile type
-                cell.className = "grid-cell";
-
-                // Apply the appropriate class based on the tileType
-                switch (tileType) {
-                    case "forest":
-                        cell.classList.add("element-cell", "forest");
-                        break;
-                    case "water":
-                        cell.classList.add("element-cell", "water");
-                        break;
-                    case "town":
-                        cell.classList.add("element-cell", "town");
-                        break;
-                    case "farm":
-                        cell.classList.add("element-cell", "farm");
-                        break;
-                    default:
-                        cell.classList.add("empty-cell");
-                }
-            }
-        }
-    }
-}
-
-// Checking if the current shape has any cells with a value of 1
-function isShapeWithOtherOnes(shape) {
-    for (let i = 0; i < shape.length; i++) {
-        for (let j = 0; j < shape[i].length; j++) {
-            if (shape[i][j] === 1) {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// Ending the game and handle final actions
-function endGame() {
-    isGameOver = true;
-    alert("Game Over! Your total score is: " + totalScore);
-}
-
-// Getting a random mission from the available missions
-function getRandomMission() {
-    const combinedMissions = [...missions['basic'], ...missions['extra']];
-
-    if (combinedMissions.length === 0) {
-        return null;
-    }
-
-    const randomIndex = Math.floor(Math.random() * combinedMissions.length);
-    const randomMission = combinedMissions[randomIndex];
-
-    if (missions['basic'].includes(randomMission)) {
-        missions['basic'].splice(missions['basic'].indexOf(randomMission), 1);
-    } else if (missions['extra'].includes(randomMission)) {
-        missions['extra'].splice(missions['extra'].indexOf(randomMission), 1);
-    }
-
-    return randomMission;
-}
-
-// Rotating an element shape
-function rotateShape(shape) {
-    let rotated = [];
-
-    for (let j = 0; j < shape[0].length; j++) {
-        let newRow = shape.map(row => row[j]).reverse();
-        rotated.push(newRow);
-    }
-    return rotated;
-}
-
-// Flipping an element shape
-function flipShape(shape) {
-    const flippedShape = [];
-
-    for (let i = 0; i < shape.length; i++) {
-        flippedShape.push(shape[i].slice().reverse());
-    }
-
-    return flippedShape;
-}
-
-// Calculating and displaying mission scores based on elapsed time units
-function calculateAndDisplayMissionScores(timeUnitsElapsed) {
-
-    let season = getCurrentSeason(timeUnitsElapsed);
-
-    // Calculate mission scores based on the current season
-    let missionScoreA = calculateMissionsScores(missionA);
-    let missionScoreB = calculateMissionsScores(missionB);
-    let missionScoreC = calculateMissionsScores(missionC);
-    let missionScoreD = calculateMissionsScores(missionD);
-
-    let seasonScore = 0;
-    let seasonScoreElement;
-    let pointsElement;
-
-    // Determine the current season based on timeUnitsElapsed
-    switch (season) {
-        case "Spring": {
-            seasonScore = missionScoreA + missionScoreB + surroundedMountain();
-            missionATotalScore += missionScoreA;
-            missionBTotalScore += missionScoreB;
-            // missionATotalScore = Math.max(missionScoreA, missionATotalScore);
-            // missionBTotalScore = Math.max(missionScoreB, missionBTotalScore);
-            document.getElementById('currentSeason').innerText = "Summer (BC)";
-            document.querySelector('#missionA').querySelector('#missionScore').textContent = missionATotalScore;
-            document.querySelector('#missionB').querySelector('#missionScore').textContent = missionBTotalScore;
-            highlightMissions('missionB', 'missionC');
-            break;
-        }
-        case "Summer": {
-            seasonScore = missionScoreB + missionScoreC + surroundedMountain();
-            missionBTotalScore += missionScoreB;
-            missionCTotalScore += missionScoreC;
-            // missionBTotalScore = Math.max(missionScoreB, missionBTotalScore);
-            // missionCTotalScore = Math.max(missionScoreC, missionCTotalScore);
-            document.getElementById('currentSeason').innerText = "Autumn (CD)";
-            document.querySelector('#missionB').querySelector('#missionScore').textContent = missionBTotalScore;
-            document.querySelector('#missionC').querySelector('#missionScore').textContent = missionCTotalScore;
-            highlightMissions('missionC', 'missionD');
-            break;
-        }
-        case "Autumn": {
-            seasonScore = missionScoreC + missionScoreD + surroundedMountain();
-            missionCTotalScore += missionScoreC;
-            missionDTotalScore += missionScoreD;
-            // missionCTotalScore = Math.max(missionScoreC, missionCTotalScore);
-            // missionDTotalScore = Math.max(missionScoreD, missionDTotalScore);
-            document.getElementById('currentSeason').innerText = 'Winter AD';
-            document.querySelector('#missionC').querySelector('#missionScore').textContent = missionCTotalScore;
-            document.querySelector('#missionD').querySelector('#missionScore').textContent = missionDTotalScore;
-            highlightMissions('missionA', 'missionD');
-            break;
-        }
-        case "Winter": {
-            seasonScore = missionScoreA + missionScoreD + surroundedMountain();
-            missionATotalScore += missionScoreA;
-            missionDTotalScore += missionScoreD;
-            // missionATotalScore = Math.max(missionScoreA, missionATotalScore);
-            // missionDTotalScore = Math.max(missionScoreD, missionDTotalScore);
-            // document.getElementById('currentSeason').innerText = 'Sprint';
-            document.querySelector('#missionA').querySelector('#missionScore').textContent = missionATotalScore;
-            document.querySelector('#missionD').querySelector('#missionScore').textContent = missionDTotalScore;
-            break;
-        }
-    }
-
-    // Update the HTML element to display the mission score for the current season
-    seasonScoreElement = document.getElementById(`${season.toLowerCase()}`);
-    pointsElement = seasonScoreElement.querySelector(".points");
-    pointsElement.textContent = seasonScore;
-
-    // console.log(`Points for ${season}: ${seasonScore}, ${missionScoreA}
-    // ${missionScoreB} ${missionScoreC} ${missionScoreD}`);
-
-    // Update the total score
-    totalScore += seasonScore;
-    document.getElementById("totalPoints").textContent = totalScore;
-}
-
-// Calculating scores for different missions
-function calculateMissionsScores(mission) {
-    switch (mission.title) {
-        // Basic missions
-        case "Borderlands": return calculateBorderlandsScore();
-        case "Edge of the forest": return calculateEdgeOfTheForestScore();
-        case "Sleepy valley": return calculateSleepyValleyScore();
-        case "Watering potatoes": return calculateWateringPotatoes();
-
-        // Extra missions
-        case "Tree line": return calculateTreeLineScore();
-        case "Watering canal": return calculateWateringCanalScore();
-        case "Wealthy town": return calculateWealthyTownScore();
-        case "Magicians valley": return calculateMagiciansValleyScore();
-        case "Empty site": return calculateEmptySiteScore();
-        case "Row of houses": return calculateTerracedHouseScore();
-        case "Odd numbered silos": return calculateOddNumberedSilosScore();
-        case "Rich countryside": return calculateRichCountrysideScore();
-        default: return 0; // Return 0 if the mission is not recognized
-    }
-}
-
-// Extra point calculation for covering a mountain
-function surroundedMountain() {
-    let surroundedMountainsCount = 0;
-    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-    for (const mountain of mountainCoordinates) {
-        let terrainsCount = 0;
-        for (const [dx, dy] of directions) {
-            let ni = mountain.row - 1 + dx;
-            let nj = mountain.column - 1 + dy;
-
-            if (gridArray[ni][nj] !== 0) {
-                terrainsCount++;
-            }
-        }
-        if (terrainsCount === 4) surroundedMountainsCount++;
-    }
-
-    return surroundedMountainsCount;
-}
-
-// Basic Missions
-// Borderlands
-function calculateBorderlandsScore() {
-    let score = 0;
-
-    // Check completed rows
-    for (let row = 0; row < gridSize; row++) {
-        if (isRowCompleted(row)) {
-            score += 6;
-        }
-    }
-
-    // Check completed columns
-    for (let col = 0; col < gridSize; col++) {
-        if (isColumnCompleted(col)) {
-            score += 6;
-        }
-    }
-
-    return score;
-}
-
-function isRowCompleted(row) {
-    for (let col = 0; col < gridSize; col++) {
-        if (gridArray[row][col] === 0) {
-            return false;
-        }
-    }
-    return true;
-}
-
-function isColumnCompleted(col) {
-    for (let row = 0; row < gridSize; row++) {
-        if (gridArray[row][col] === 0) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// Edge of the forest
-function calculateEdgeOfTheForestScore() {
-    let missionScore = 0;
-    const gridSize = gridArray.length;
-
-    // Check top and bottom edges
-    for (let x = 0; x < gridSize; x++) {
-        if (gridArray[0][x] === "forest") {
-            missionScore++;
-        }
-        if (gridArray[gridSize - 1][x] === "forest") {
-            missionScore++;
-        }
-    }
-
-    // Check left and right edges, excluding corners
-    for (let y = 1; y < gridSize - 1; y++) {
-        if (gridArray[y][0] === "forest") {
-            missionScore++;
-        }
-        if (gridArray[y][gridSize - 1] === "forest") {
-            missionScore++;
-        }
-    }
-
-    return missionScore;
-}
-
-// Sleepy valley
-function calculateSleepyValleyScore() {
-    let missionScore = 0;
-
-    for (let i = 0; i < gridSize; i++) {
-        let countOfForests = 0;
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[i][j] === "forest") {
-                countOfForests++;
-            }
-        }
-        if (countOfForests === 3) {
-            missionScore += 4;
-        }
-    }
-
-    return missionScore;
-}
-
-// Watering potatoes
-function calculateWateringPotatoes() {
-    let missionScore = 0;
-
-    for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-            let iPlus1 = i + 1 < gridSize && gridArray[i + 1][j] === "farm";
-            let iMinus1 = i - 1 >= 0 && gridArray[i - 1][j] === "farm";
-            let jPlus1 = j + 1 < gridSize && gridArray[i][j + 1] === "farm";
-            let jMinus1 = j - 1 >= 0 && gridArray[i][j - 1] === "farm";
-
-            if (gridArray[i][j] === "water") {
-                if (i === 0 && j === 0 && (iPlus1 || jPlus1)) {
-                    missionScore += 2;
-                } else if (i === 0 && (iPlus1 || jPlus1 || jMinus1)) {
-                    missionScore += 2;
-                } else if (j === 0 && (iPlus1 || jPlus1 || iMinus1)) {
-                    missionScore += 2;
-                } else if (iPlus1 || iMinus1 || jPlus1 || jMinus1) {
-                    missionScore += 2;
-                }
-            }
-        }
-    }
-
-    return missionScore;
-}
-
-// Extra Missions
-// Tree line
-function calculateTreeLineScore() {
-    let max_line = 0;
-    for (let i = 0; i < gridSize; i++) {
-        let current_line = 0;
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[j][i] == "forest") {
-                current_line++;
-                if (current_line > max_line) {
-                    max_line = current_line;
-                }
-            } else {
-                current_line = 0;
-            }
-        }
-    }
-
-    return max_line * 2;
-}
-
-// Watering canal
-function calculateWateringCanalScore() {
-    let count = 0;
-    for (let i = 0; i < gridSize; i++) {
-        let farmCount = 0;
-        let waterCount = 0;
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[j][i] == "water") {
-                waterCount++;
-            } else
-                if (gridArray[j][i] == "farm") {
-                    farmCount++;
-                }
-        }
-        if (waterCount == farmCount && waterCount > 0) {
-            count += 4;
-        }
-    }
-
-    return count;
-}
-
-// Wealthy town
-function calculateWealthyTownScore() {
-    let missionScore = 0;
-
-    // Function to check if there are at least 3 different terrain types around the town
-    const checkNeighbors = (i, j) => {
-        let terrainTypes = new Set();
-
-        // Define directions for up, down, left, right
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-        // Check only the four orthogonal neighbors
-        for (const [dx, dy] of directions) {
-            let ni = i + dx, nj = j + dy;
-            if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize && gridArray[ni][nj] !== 0) {
-                terrainTypes.add(gridArray[ni][nj]);
-            }
-        }
-
-        return terrainTypes.size >= 3;
-    };
-
-    // Check each cell in the grid
-    for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[i][j] === "town" && checkNeighbors(i, j)) {
-                missionScore += 3;
-            }
-        }
-    }
-
-    return missionScore;
-}
-
-// Magicians' valley
-function calculateMagiciansValleyScore() {
-    let missionScore = 0;
-
-    mountainCoordinates.forEach(mountain => {
-        // Defining the coordinates to check (above, below, left, right)
-        const adjacentCoordinates = [
-            { x: mountain.row - 1, y: mountain.column }, // Above
-            { x: mountain.row + 1, y: mountain.column }, // Below
-            { x: mountain.row, y: mountain.column - 1 }, // Left
-            { x: mountain.row, y: mountain.column + 1 }, // Right
-        ];
-
-        adjacentCoordinates.forEach(coord => {
-            //Adjusting for zero-based indexing
-            let ni = coord.x - 1;
-            let nj = coord.y - 1;
-
-            if (gridArray[ni][nj] === "water") {
-                missionScore += 3;
-            }
-        })
-
-    });
-
-    return missionScore;
-}
-
-// Empty site
-function calculateEmptySiteScore() {
-    let missionScore = 0;
-
-    const checkNeighbors = (i, j) => {
-        let emptyNeighborCount = 0;
-        const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-
-        directions.forEach(([dx, dy]) => {
-            let ni = i + dx, nj = j + dy;
-            if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize && gridArray[ni][nj] === 0) {
-                emptyNeighborCount++;
-            }
+        
+        Renderer.updateTimeDisplay();
+    },
+
+    getCurrentSeason() {
+        const elapsed = CONFIG.TOTAL_TIME_UNITS - GameState.timeRemaining;
+        const seasonIndex = Math.min(
+            Math.floor(elapsed / CONFIG.TIME_PER_SEASON),
+            CONFIG.SEASONS.length - 1
+        );
+        return CONFIG.SEASONS[seasonIndex];
+    },
+
+    handleSeasonEnd(elapsedTime) {
+        const seasonIndex = Math.floor(elapsedTime / CONFIG.TIME_PER_SEASON);
+        const season = CONFIG.SEASONS[seasonIndex];
+        const activeMissions = CONFIG.SEASON_MISSIONS[season];
+        
+        // Calculate scores for active missions
+        let seasonScore = 0;
+        
+        activeMissions.forEach(letter => {
+            const mission = GameState.missions[letter];
+            const score = MissionScoring.calculate(mission);
+            GameState.missionScores[letter] += score;
+            seasonScore += score;
+            Renderer.updateMissionScore(letter);
         });
-
-        return emptyNeighborCount;
-    };
-
-    for (let i = 0; i < gridSize; i++) {
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[i][j] === "town") {
-                missionScore += 2 * checkNeighbors(i, j);
-            }
+        
+        // Add mountain bonus
+        seasonScore += MissionScoring.surroundedMountains();
+        
+        // Update displays
+        Renderer.updateSeasonScore(season, seasonScore);
+        GameState.totalScore += seasonScore;
+        Renderer.updateTotalScore();
+        
+        // Update for next season
+        if (seasonIndex < CONFIG.SEASONS.length - 1) {
+            const nextSeason = CONFIG.SEASONS[seasonIndex + 1];
+            Renderer.updateSeasonDisplay(season);
+            Renderer.highlightActiveMissions(nextSeason);
         }
-    }
-    return missionScore;
+    },
 
-}
-
-//Row of houses
-function calculateTerracedHouseScore() {
-    let missionScore = 0;
-    let maxUninterruptedTownLength = 0;
-    let maxRowMatchCount = 0;
-
-    for (let i = 0; i < gridSize; i++) {
-        let currentUninterruptedLength = 0;
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[i][j] === "town") currentUninterruptedLength++;
-            else {
-                if (currentUninterruptedLength > maxUninterruptedTownLength) {
-                    maxUninterruptedTownLength = currentUninterruptedLength;
-                    maxRowMatchCount = 1;
-                } else if (currentUninterruptedLength === maxUninterruptedTownLength) {
-                    maxRowMatchCount++;
+    canPlaceAnyShape() {
+        let shape = GameState.currentShape;
+        
+        for (let rotation = 0; rotation < 4; rotation++) {
+            for (let y = 0; y < CONFIG.GRID_SIZE; y++) {
+                for (let x = 0; x < CONFIG.GRID_SIZE; x++) {
+                    if (this.isPlacementValid(shape, x, y)) {
+                        return true;
+                    }
                 }
-                currentUninterruptedLength = 0;
             }
+            shape = ShapeUtils.rotate(shape);
         }
-        if (maxUninterruptedTownLength < currentUninterruptedLength) {
-            maxUninterruptedTownLength = currentUninterruptedLength;
-            maxRowMatchCount = 1;
-        } else
-            if (maxRowMatchCount === currentUninterruptedLength) {
-                maxRowMatchCount++;
-            }
+        return false;
+    },
+
+    isPlacementValid(shape, startX, startY) {
+        const positions = ShapeUtils.getActiveCellPositions(shape, startX, startY);
+        
+        return positions.every(({ x, y }) => 
+            GridUtils.isValidPosition(x, y) && GridUtils.isCellEmpty(x, y)
+        );
+    },
+
+    endGame(reason = '') {
+        GameState.isGameOver = true;
+        const message = reason 
+            ? `Game Over: ${reason}\nYour total score is: ${GameState.totalScore}`
+            : `Game Over! Your total score is: ${GameState.totalScore}`;
+        alert(message);
     }
+};
 
-    missionScore = 2 * maxUninterruptedTownLength * maxRowMatchCount;
-    return missionScore;
-}
+// =============================================================================
+// INITIALIZATION
+// =============================================================================
 
-// Odd numbered silos
-function calculateOddNumberedSilosScore() {
-    let missionScore = 0;
-
-    for (let i = 0; i < gridSize; i += 2) {
-        let isFull = true;
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[j][i] === 0) {
-                isFull = false;
-                break;
-            }
-        }
-        if (isFull) missionScore += 10;
-    }
-
-    return missionScore;
-}
-
-// Rich countryside
-function calculateRichCountrysideScore() {
-    let missionScore = 0;
-
-    for (let i = 0; i < gridSize; i++) {
-        let types = new Set();
-        for (let j = 0; j < gridSize; j++) {
-            if (gridArray[i][j] !== 0) {
-                types.add(gridArray[i][j]);
-            }
-        }
-        if (types.size >= 5) missionScore += 4;
-    }
-
-    return missionScore;
-}
-
-// Getting the current season based on elapsed time units
-function getCurrentSeason(timeUnitsElapsed) {
-    if (timeUnitsElapsed <= 7) {
-        return "Spring";
-    } else if (timeUnitsElapsed <= 14) {
-        return "Summer";
-    } else if (timeUnitsElapsed <= 21) {
-        return "Autumn";
-    } else {
-        return "Winter";
-    }
-}
-
-// Highlighting active missions
-function highlightMissions(...activeMissions) {
-    // Remove the highlight class from all mission elements
-    const allMissionElements = document.querySelectorAll('.mission');
-    allMissionElements.forEach((missionElement) => {
-        missionElement.classList.remove('highlighted-mission');
-    });
-
-    // Loop through active missions and highlight them
-    activeMissions.forEach((missionName) => {
-        let missionElement = document.getElementById(missionName);
-        if (missionElement) {
-            missionElement.classList.add('highlighted-mission');
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    GameController.init();
+});

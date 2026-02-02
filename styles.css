@@ -1,20 +1,75 @@
+/* =============================================================================
+   The Mapmaker - Stylesheet
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   CSS Custom Properties
+   ----------------------------------------------------------------------------- */
+
 :root {
+    /* Season Colors */
+    --color-spring: #7ebc74;
+    --color-spring-border: #528c48;
+    --color-summer: #fae985;
+    --color-summer-border: #dcc147;
+    --color-autumn: #e3bf99;
+    --color-autumn-border: #66411d;
+    --color-winter: #7bcfe9;
+    --color-winter-border: #4d8ea2;
+    
+    /* UI Colors */
+    --color-primary: #84bb70;
+    --color-primary-light: #bfffa4;
+    --color-text: #333;
+    --color-background: #fff;
+    --color-highlight: #ffd700;
+    
+    /* Preview Colors */
+    --color-preview-valid: #abeb83;
+    --color-preview-valid-border: #5bbf38;
+    --color-preview-invalid: #e2bf96;
+    --color-preview-invalid-border: #ea3323;
+    
+    --border-radius: 10px;
+    --border-radius-lg: 15px;
+    
     --background-image: url("assets/tiles/background_image.png");
 }
 
+/* -----------------------------------------------------------------------------
+   Base Styles
+   ----------------------------------------------------------------------------- */
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), var(--background-image);
+    background-image: linear-gradient(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.8)), 
+                      var(--background-image);
     background-size: cover;
     padding: 0 50px;
     font-family: 'Arial', sans-serif;
     margin: 20px 40px;
 }
 
-* {
-    box-sizing: border-box;
+hr {
+    border: none;
+    height: 1px;
+    background-color: #000;
+    margin: 10px 0;
 }
 
-/* Game Header Styles */
+h2 {
+    font-size: 24px;
+    margin: 0;
+    padding: 0;
+}
+
+/* -----------------------------------------------------------------------------
+   Header & Scoring
+   ----------------------------------------------------------------------------- */
+
 .game-header {
     display: flex;
     justify-content: space-between;
@@ -24,7 +79,7 @@ body {
 
 .map-title {
     font-size: 32px;
-    color: #333;
+    color: var(--color-text);
     margin-bottom: 8px;
 }
 
@@ -34,7 +89,6 @@ body {
     margin-left: 20px;
 }
 
-/* Seasons Container */
 .seasons-container {
     display: flex;
     gap: 10px;
@@ -49,17 +103,20 @@ body {
     padding: 10px;
     width: 100px;
     height: 100px;
-    background-color: #e9ecef;
-    border: 4px solid #dee2e6; 
-    border-radius: 15px;
-    color: #f5faf4; 
+    border: 4px solid;
+    border-radius: var(--border-radius-lg);
+    color: #f5faf4;
     font-size: 18px;
 }
 
-#spring { background-color: #7ebc74; border-color: #528c48;}
-#summer { background-color: #fae985; border-color: #dcc147;}
-#autumn { background-color: #e3bf99; border-color: #66411d;}
-#winter { background-color: #7bcfe9; border-color: #4d8ea2;}
+.season h4 {
+    margin: 0;
+}
+
+#spring { background-color: var(--color-spring); border-color: var(--color-spring-border); }
+#summer { background-color: var(--color-summer); border-color: var(--color-summer-border); }
+#autumn { background-color: var(--color-autumn); border-color: var(--color-autumn-border); }
+#winter { background-color: var(--color-winter); border-color: var(--color-winter-border); }
 
 .total-score {
     text-align: center;
@@ -72,17 +129,23 @@ body {
     font-weight: bold;
 }
 
-/* Main Game Area */
+/* -----------------------------------------------------------------------------
+   Main Game Layout
+   ----------------------------------------------------------------------------- */
+
 .game-main {
     display: flex;
     justify-content: space-between;
 }
 
-/* Map Grid Styles */
 .map-section {
     flex: 1;
     padding: 10px;
 }
+
+/* -----------------------------------------------------------------------------
+   Grid Map
+   ----------------------------------------------------------------------------- */
 
 .grid-map {
     display: grid;
@@ -90,8 +153,8 @@ body {
     grid-template-rows: repeat(11, 1fr);
     justify-content: center;
     align-content: center;
-    background-color: #fff;
-    border-radius: 10px;
+    background-color: var(--color-background);
+    border-radius: var(--border-radius);
     padding: 10px;
     margin-top: -55px;
     width: calc(11 * 45px + 10 * 5px + 20px);
@@ -108,7 +171,10 @@ body {
     background: url('assets/tiles/mountain_tile.png') center/cover;
 }
 
-/* Side Content and Interactions */
+/* -----------------------------------------------------------------------------
+   Side Panel
+   ----------------------------------------------------------------------------- */
+
 .side-content {
     display: flex;
     flex-direction: column;
@@ -118,6 +184,52 @@ body {
     margin-top: -30px;
     padding: 10px;
 }
+
+/* -----------------------------------------------------------------------------
+   Missions Display
+   ----------------------------------------------------------------------------- */
+
+.mission-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 10px;
+    margin-bottom: 10px;
+}
+
+.mission {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    margin: 10px;
+}
+
+.mission img {
+    max-height: 100px;
+    display: block;
+    border-radius: 10px;
+    transition: transform 0.2s ease-in-out;
+}
+
+.mission-score {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+/* Highlight applied to the image itself */
+.highlighted-mission img {
+    outline: 5px solid var(--color-highlight);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    transform: scale(1.05);
+}
+
+/* -----------------------------------------------------------------------------
+   Element Interaction
+   ----------------------------------------------------------------------------- */
 
 .element-interaction-container {
     display: flex;
@@ -136,57 +248,24 @@ body {
     margin-bottom: 60px;
 }
 
-.mission-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-gap: 10px;
-    margin-bottom: 10px;
+.action-button {
+    width: 100px;
+    height: 75px;
+    border: 5px solid var(--color-primary);
+    background-color: var(--color-primary-light);
+    border-radius: var(--border-radius);
+    margin-top: 10px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: transform 0.1s ease;
 }
 
-.mission-grid img {
-    max-height: 100px;
-    display: block;
-    margin: 0 auto;
+.action-button:hover {
+    transform: scale(1.02);
 }
 
-.mission {
-    position: relative;
-    display: inline-block;
-    margin: 10px;
-}
-
-.mission-score {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    background-color: rgba(255, 255, 255, 0.8);;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
-.highlighted-mission {
-    outline: 5px solid #ffd700; /* Use a bright yellow color for the outline */
-    border-radius: 17px;
-    box-shadow: 0 0 5px rgba(255, 215, 0, 0.5); /* Add a subtle shadow for the "blowish" effect */
-    transform: scale(1.05); /* Scale the element slightly without affecting layout */
-    transform-origin: center center; /* Set the transform origin to the center for uniform scaling */
-    transition: outline 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Add a smooth transition for outline and box-shadow */
-}
-
-hr {
-    border: none;
-    height: 1px;
-    background-color: #000;
-    margin: 10px 0;
-}
-
-.element-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5px;
-    padding: 5px;
-    padding-bottom: 0px;
+.action-button:active {
+    transform: scale(0.98);
 }
 
 .current-element-interaction {
@@ -197,40 +276,10 @@ hr {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #fff;
-    border-radius: 15px;
+    background-color: var(--color-background);
+    border-radius: var(--border-radius-lg);
     font-size: 20px;
     margin-top: -55px;
-}
-
-h2 {
-    font-size: 24px;
-    margin: 0;
-    padding: 0;
-}
-
-.element-cell {
-    width: 45px;
-    height: 45px;
-}
-
-.element-cell.forest { background: url('assets/tiles/forest_tile.png') center/cover; }
-.element-cell.water { background: url('assets/tiles/water_tile.png') center/cover; }
-.element-cell.town { background: url('assets/tiles/town_tile.png') center/cover; }
-.element-cell.farm { background: url('assets/tiles/farm_tile.png') center/cover; }
-
-.element-cell.empty-cell {
-    background: #fff;
-}
-
-.action-button {
-    width: 100px;
-    height: 75px; 
-    border: 5px solid #84bb70;
-    background-color: #bfffa4;
-    border-radius: 10px;
-    margin-top: 10px;
-    font-size: 20px;
 }
 
 .time-unit-display {
@@ -240,7 +289,7 @@ h2 {
     flex-direction: row;
     align-items: center;
     justify-content: end;
-    background-color: #fff;
+    background-color: var(--color-background);
 }
 
 .clock-image {
@@ -249,108 +298,219 @@ h2 {
     margin-left: 5px;
 }
 
-.mission-display, .current-seasons-display, .elapse-time-display {
-    flex-grow: 1;
+/* -----------------------------------------------------------------------------
+   Element Grid (Preview)
+   ----------------------------------------------------------------------------- */
+
+.element-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    padding: 5px;
+    padding-bottom: 0;
 }
 
-/* For preview states */
+.element-cell {
+    width: 45px;
+    height: 45px;
+}
+
+.element-cell.empty-cell {
+    background: var(--color-background);
+}
+
+.element-cell.forest { background: url('assets/tiles/forest_tile.png') center/cover; }
+.element-cell.water { background: url('assets/tiles/water_tile.png') center/cover; }
+.element-cell.town { background: url('assets/tiles/town_tile.png') center/cover; }
+.element-cell.farm { background: url('assets/tiles/farm_tile.png') center/cover; }
+
+/* -----------------------------------------------------------------------------
+   Placement Preview States
+   ----------------------------------------------------------------------------- */
+
 .preview-yes {
-    background: #abeb83;
-    border: 2px solid #5bbf38;
+    background: var(--color-preview-valid) !important;
+    border: 2px solid var(--color-preview-valid-border);
     border-radius: 5px;
-    box-shadow: 0 0 5px #5bbf38;
+    box-shadow: 0 0 5px var(--color-preview-valid-border);
 }
 
 .preview-no {
-    background-color: #e2bf96;
-    border: 2px solid #ea3323;
+    background-color: var(--color-preview-invalid) !important;
+    border: 2px solid var(--color-preview-invalid-border);
     border-radius: 5px;
-    box-shadow: 0 0 5px #ea3323;
+    box-shadow: 0 0 5px var(--color-preview-invalid-border);
 }
 
-/* For an occupied cell */
 .element {
-    background-color: #fff;
+    background-color: var(--color-background);
     border: none;
     border-radius: 0;
     box-shadow: none;
 }
 
-@media screen and (max-width: 1200px) {
+/* -----------------------------------------------------------------------------
+   Responsive Design - Only when necessary
+   ----------------------------------------------------------------------------- */
 
+/* When side-by-side no longer fits (~850px based on content width) */
+@media screen and (max-width: 850px) {
     body {
-        padding: 0;
+        padding: 10px;
+        margin: 10px;
     }
 
     .game-header {
-        width: calc(11 * 40px + 10 * 5px + 20px);
-        display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-        margin-left: -2px;
+        text-align: center;
+    }
+
+    .scores-container {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .seasons-container {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 
     .season {
-        width: 100px;
-        height: 50px;
-        font-size: 16px;
-    }
-
-    .grid-map {
-        width: calc(11 * 40px + 10 * 5px + 20px);
-        height: calc(11 * 40px + 10 * 5px + 20px);
-        margin-top: 0;
-    }
-
-    .grid-cell {
-        width: 40px;
-        height: 40px;
-        background: url('assets/tiles/base_tile.png') center/cover;
+        width: 80px;
+        height: 70px;
+        font-size: 14px;
     }
 
     .game-main {
-        display: flex;
-        flex-direction: space-around;   
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .grid-map {
+        margin-top: 0;
     }
 
     .side-content {
-        margin-top: -140px;
         margin-left: 0;
+        margin-top: 20px;
+        height: auto;
+        width: calc(11 * 45px + 10 * 5px + 20px);
     }
 
     .mission-grid {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        grid-gap: 5px;
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .mission-grid img {
-        max-height: 90px;
+    .element-interaction-container {
+        margin-top: 10px;
     }
 
-    .grid-mountain {
-        background: url('assets/tiles/mountain_tile.png') center/cover;
+    .current-element-interaction {
+        margin-top: 0;
+    }
+
+    .current-element-buttons {
+        margin-bottom: 0;
+    }
+}
+
+/* Smaller screens - shrink grid */
+@media screen and (max-width: 580px) {
+    .grid-map {
+        width: calc(11 * 35px + 10 * 4px + 16px);
+        height: calc(11 * 35px + 10 * 4px + 16px);
+        padding: 8px;
+    }
+
+    .grid-cell {
+        width: 35px;
+        height: 35px;
+    }
+
+    .side-content {
+        width: calc(11 * 35px + 10 * 4px + 16px);
+    }
+
+    .element-cell {
+        width: 35px;
+        height: 35px;
+    }
+
+    .current-element-interaction {
+        width: 130px;
+        height: 160px;
+    }
+
+    .action-button {
+        width: 80px;
+        height: 60px;
+        font-size: 16px;
+    }
+
+    .mission img {
+        max-height: 80px;
     }
 
     h2 {
         font-size: 18px;
     }
+}
 
-    .element-interaction-container {
-        margin-top: 0px;
+/* Very small screens */
+@media screen and (max-width: 450px) {
+    .grid-map {
+        width: calc(11 * 28px + 10 * 3px + 14px);
+        height: calc(11 * 28px + 10 * 3px + 14px);
+        padding: 7px;
     }
 
-    .current-element-interaction {
-        width: 150px;
-        height: 175px;
-        margin-top: 0px;
-        margin-bottom: 45px;
+    .grid-cell {
+        width: 28px;
+        height: 28px;
+    }
+
+    .side-content {
+        width: calc(11 * 28px + 10 * 3px + 14px);
     }
 
     .element-cell {
-        width: 40px;
-        height: 40px;
+        width: 28px;
+        height: 28px;
+    }
+
+    .current-element-interaction {
+        width: 110px;
+        height: 130px;
+    }
+
+    .action-button {
+        width: 65px;
+        height: 50px;
+        font-size: 14px;
+        border-width: 3px;
+    }
+
+    .mission-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mission img {
+        max-height: 90px;
+    }
+
+    .season {
+        width: 70px;
+        height: 55px;
+        font-size: 12px;
+        padding: 5px;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    .map-title {
+        font-size: 24px;
     }
 }
